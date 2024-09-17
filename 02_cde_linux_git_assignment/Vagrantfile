@@ -1,0 +1,43 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+    # pg_database service
+    config.vm.define "etl_pipeline" do |etl_pipeline|
+        etl_pipeline.vm.box = "ubuntu/focal64"
+        etl_pipeline.vm.hostname = "cdepipeline"
+        etl_pipeline.vm.provider "virtualbox" do |vb|
+            vb.gui = false
+            vb.memory = "1024"
+            vb.cpus = 1
+        end
+        
+        etl_pipeline.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: ['.git/', 'parch_and_posey', 'provision', 'README.md', 'images']
+    #   etl.vm.provision "shell", path: "./provision/setup_cron_with_job.sh"
+    end
+  
+    # postgresql service
+    config.vm.define "pg_database" do |pg_database|
+        pg_database.vm.box = "ubuntu/focal64"
+        pg_database.vm.hostname = "cdedatabase"
+        pg_database.vm.network "forwarded_port", guest: 5432, host: 5432, protocol: "tcp", host_ip: "127.0.0.1", auto_correct: true
+        pg_database.vm.usable_port_range = 8000..8999
+        pg_database.vm.network :private_network, ip: "192.168.56.4" 
+
+        
+        # Sync folder with CSV files from host to guest
+        pg_database.vm.synced_folder "./parch_and_posey/data", "/vagrant_data"
+        pg_database.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: ['.git/', 'etl_pipeline', 'file_mover', 'images', 'provision', 'README.md']
+      
+        pg_database.vm.provider "virtualbox" do |vbox|
+            vbox.memory = 2048
+            vbox.cpus = 1
+        end
+        
+        pg_database.vm.provision "shell", path: "./provision/database_provisioning.sh"
+    end
+  
+
+  end
+  
