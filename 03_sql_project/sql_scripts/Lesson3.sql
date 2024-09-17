@@ -337,6 +337,7 @@ SELECT CASE WHEN total_amt_usd >= 2000 TNEN 'At least 2000'
       COUNT(*)
 FROM orders
 GROUP BY 1;
+
 /* We would like to understand 3 different levels of customers based on the amount associated
 with their purchases. The top level includes anyone with a Lifetime Value (total sales of all
 orders) greater than 200,000 usd. The second level is between 200,000 and 100,000 usd. The lowest
